@@ -19,3 +19,13 @@ INFO: sudo acquired. Trying to execute bash on kafka image
 INFO: calling docker exec -it 4275941e2ae9 bash
 bash-4.3# 
 ```
+Also, you can execute more complex commands bracing it by quotes.
+```bash
+[root@abner-pc]# dockerexec postgres 'psql -U myuser'
+INFO: sudo acquired. Trying to execute psql -U myuser on postgres image
+INFO: calling docker exec -it 247109a5d980 psql -U myuser
+psql (9.6.6)
+Type "help" for help.
+
+mydatabase=# 
+```
