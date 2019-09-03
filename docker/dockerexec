@@ -1,6 +1,6 @@
 #!/bin/bash
 PNAME=$1
 sudo echo "INFO: sudo acquired. Trying to execute $2 on $1 image"
-PID="$(sudo docker ps | grep $PNAME | awk '{print $1}')"
+PID="$(sudo docker ps | grep $PNAME | awk 'NR==1{print $1}')"
 echo "INFO: calling docker exec -it $PID $2" 
 sudo docker exec -it $PID $2
