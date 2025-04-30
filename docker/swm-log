@@ -1,0 +1,55 @@
+#!/bin/bash
+
+if [ -z "$1" ]; then
+  echo "Usage: $0 <partial-service-name> [--tail N] [--since TIME] [--no-follow]"
+  echo -e "Params:\n  --tail N: shows the N last lines.\n  --since TIME: shows only logs after TIME(duration string format)\n  --no-follow: disable the default -f flag"
+  echo "Examples:"
+  echo "  $0 report"
+  echo "  $0 report --tail 100"
+  echo "  $0 report --since 10m"
+  echo "  $0 report --tail 50 --since 1h --no-follow"
+  exit 1
+fi
+
+SEARCH_TERM="$1"
+shift
+
+# Optional args
+TAIL_ARG=""
+SINCE_ARG=""
+FOLLOW_ARG="-f"  # Default: follow logs
+
+# Parse optional flags
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --tail)
+      TAIL_ARG="--tail $2"
+      shift 2
+      ;;
+    --since)
+      SINCE_ARG="--since $2"
+      shift 2
+      ;;
+    --no-follow)
+      FOLLOW_ARG=""  # Remove -f
+      shift
+      ;;
+    *)
+      echo "❌ Unknown option: $1"
+      exit 1
+      ;;
+  esac
+done
+
+echo "🔍 Searching for running services matching: '$SEARCH_TERM'"
+
+# Get tasks from all running nodes, filter, and pick one per service
+docker node ls -q | \
+xargs -I {} docker node ps {} --no-trunc --format '{{.ID}} {{.Name}} {{.Node}} {{.CurrentState}}' | \
+grep "$SEARCH_TERM" | grep "Running" | \
+awk '{print $1,$2}' | \
+sort -u -k2 | \
+while read -r TASK_ID SERVICE_NAME; do
+  echo -e "\n📦 Showing logs for service: \033[1;36m$SERVICE_NAME\033[0m"
+  docker service logs $FOLLOW_ARG $TAIL_ARG $SINCE_ARG "$TASK_ID"
+done
